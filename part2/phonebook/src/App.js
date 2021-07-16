@@ -1,130 +1,167 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
-import personService from './persons'
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import personService from "./persons";
 
-const Person = ({ persons, searchValue }) => { 
-  if(searchValue.length > 0){
-    return ( 
-      persons.filter(person => person.name.toLowerCase().includes((searchValue.toLowerCase()))).map(filteredName => (
+const Person = ({ persons, searchValue, handleDelete }) => {
+  if (searchValue.length > 0) {
+    return persons
+      .filter((person) =>
+        person.name.toLowerCase().includes(searchValue.toLowerCase())
+      )
+      .map((filteredName) => (
         <li key={filteredName.name}>
           {filteredName.name} , {filteredName.number}
         </li>
-      )))
-    
+      ));
   }
-  return ( 
+  return (
     <div>
-    <ul>
-        {persons.map(person => 
-          <li key={person.name}>
+      <ul>
+        {persons.map((person) => (
+          <li key={person.id}>
+            {console.log(`Person id is , ${person.id}`)}
             {/* Add handler for button */}
-              {person.name} , {person.number}, <button>delete</button>
+            {person.name} , {person.number},{" "}
+            <button
+              type="button"
+              color="blue"
+              onClick={(e) => handleDelete(e, person.id, person.name)}
+              // (e) => {
+              //   e.preventDefault();
+              //   window.alert(`Delete ${person.name}?`);
+              // }
+            >
+              Delete
+            </button>
           </li>
-          )}
-        </ul>
+        ))}
+      </ul>
     </div>
-  )
-}
+  );
+};
 
-const Search = (props) => { 
-  return ( 
+const Search = (props) => {
+  return (
     <div>
       <form>
-        filter shown with 
-        <input value={props.value} 
-          onChange={props.onChange}>
-        </input>
+        filter shown with
+        <input value={props.value} onChange={props.onChange}></input>
       </form>
     </div>
-  )
-}
+  );
+};
 
-const Form = (props) => { 
-  return ( 
+const Form = (props) => {
+  return (
     <div>
-       <form>
-          <div>name: <input value={props.newName} onChange={props.handlePersonChange}/>
-          <div>number: <input value={props.newNumber} onChange={props.handleNumberChange}/></div>
-        <div><button type="submit" onClick={props.onClick}>add</button></div>
+      <form>
+        <div>
+          name:{" "}
+          <input value={props.newName} onChange={props.handlePersonChange} />
+          <div>
+            number:{" "}
+            <input
+              value={props.newNumber}
+              onChange={props.handleNumberChange}
+            />
+          </div>
+          <div>
+            <button type="submit" onClick={props.onClick}>
+              add
+            </button>
+          </div>
         </div>
       </form>
     </div>
-  )
-}
+  );
+};
 
 const App = () => {
-  const [ persons, setPersons ] = useState([
-    
-  ]) 
-  const [ newName, setNewName ] = useState('')
-  const [ newNumber, setNewNumber ] = useState('')
-  const [ newFilter, setNewFilter ] = useState('')
+  const [persons, setPersons] = useState([]);
+  const [newName, setNewName] = useState("");
+  const [newNumber, setNewNumber] = useState("");
+  const [newFilter, setNewFilter] = useState("");
 
   useEffect(() => {
-    console.log('effect')
-    personService.getAll()
-    .then(response => { 
-      setPersons(response.data)
-    })
-  }, [])
-  console.log('render', persons.length, 'persons')
+    console.log("effect");
+    personService.getAll().then((response) => {
+      setPersons(response.data);
+    });
+  }, []);
+  console.log("render", persons.length, "persons");
 
-  const handlePersonChange = (event) => { 
-    event.preventDefault()
-    if (persons.filter(e => e.name.toLowerCase() === event.target.value.toLowerCase()).length > 0) {
-      window.alert(`${event.target.value} is already added to phonebook`)
-      setNewName('')
+  const handlePersonChange = (event) => {
+    event.preventDefault();
+    if (
+      persons.filter(
+        (e) => e.name.toLowerCase() === event.target.value.toLowerCase()
+      ).length > 0
+    ) {
+      window.alert(`${event.target.value} is already added to phonebook`);
+      setNewName("");
+    } else {
+      setNewName(event.target.value);
     }
-    else { 
-      setNewName(event.target.value)
+  };
+
+  const handleDelete = (e, id, name) => {
+    console.log(id);
+    e.preventDefault();
+    if (window.confirm(`Do you want to delete ${name}?`)) {
+      const res = axios.delete(`http://localhost:3001/Persons/${id}`);
+      setPersons(persons.filter((del) => del !== res));
     }
-  }
+  };
 
-  const handleNumberChange = (event) => { 
-    event.preventDefault()
-    setNewNumber(event.target.value)
-  }
+  const handleNumberChange = (event) => {
+    event.preventDefault();
+    setNewNumber(event.target.value);
+  };
 
-  const handleFilterChange = (event) => { 
-    event.preventDefault()
-    setNewFilter(event.target.value)
-  }
+  const handleFilterChange = (event) => {
+    event.preventDefault();
+    setNewFilter(event.target.value);
+  };
 
-  const setPersonChange = (event) => { 
-    event.preventDefault()
+  const setPersonChange = (event) => {
+    event.preventDefault();
 
     const personObject = {
       name: newName,
-      number: newNumber
-    }
-    setPersons(persons.concat(personObject))
-    setNewName('')
-    setNewNumber('')
+      number: newNumber,
+    };
+    setPersons(persons.concat(personObject));
+    setNewName("");
+    setNewNumber("");
     axios
-    .post('http://localhost:3001/persons', personObject)
-    .then(response => {
-      console.log(response)
-    })
-
-  }
+      .post("http://localhost:3001/persons", personObject)
+      .then((response) => {
+        console.log(response);
+      });
+  };
 
   return (
     <div>
       <h2>Phonebook</h2>
       <Search value={newFilter} onChange={handleFilterChange}></Search>
       <h2>Add a new</h2>
-      <Form newName={newName} 
-        handlePersonChange={handlePersonChange} 
-        newNumber={newNumber} 
-        handleNumberChange={handleNumberChange} 
-        onClick={setPersonChange}>
-      </Form>
+      <Form
+        newName={newName}
+        handlePersonChange={handlePersonChange}
+        newNumber={newNumber}
+        handleNumberChange={handleNumberChange}
+        onClick={setPersonChange}
+      ></Form>
       <h2>Numbers</h2>
       <ul>
-        <Person persons={persons} searchValue={newFilter}></Person>
+        <Person
+          persons={persons}
+          searchValue={newFilter}
+          handleDelete={handleDelete}
+        />
       </ul>
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
